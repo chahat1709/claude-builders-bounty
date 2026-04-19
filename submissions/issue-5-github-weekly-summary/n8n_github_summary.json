@@ -64,7 +64,10 @@
       "name": "🗓️ Date Calculator",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 300]
+      "position": [680, 300],
+      "parameters": {
+        "jsCode": "// Calculate the date range for the past 7 days\nconst now = new Date();\nconst sevenDaysAgo = new Date(now);\nsevenDaysAgo.setDate(now.getDate() - 7);\n\nconst fmt = (d) => d.toISOString().split('T')[0];\n\nreturn [{ json: {\n  dateFrom: fmt(sevenDaysAgo),\n  dateTo: fmt(now),\n  owner: $('📋 Config').first().json.GITHUB_OWNER,\n  repo: $('📋 Config').first().json.GITHUB_REPO,\n  discordWebhook: $('📋 Config').first().json.DISCORD_WEBHOOK,\n  language: $('📋 Config').first().json.LANGUAGE\n} }];"
+      }
     },
     {
       "parameters": {
@@ -114,7 +117,10 @@
       "name": "📝 Build Claude Prompt",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1120, 300]
+      "position": [1120, 300],
+      "parameters": {
+        "jsCode": "const dateCalc = $('🗓️ Date Calculator').first().json;\nconst prs = $('🔀 Get Merged PRs').first().json.items || [];\nconst issues = $('🐛 Get Closed Issues').first().json.items || [];\n\nconst lang = dateCalc.language || 'EN';\n\nconst prList = prs.map(p => `- [${p.title}](${p.html_url}) by @${p.user.login}`).join('\\n') || '(none)';\nconst issueList = issues.map(i => `- [${i.title}](${i.html_url}) by @${i.user.login}`).join('\\n') || '(none)';\n\nconst langPrompt = lang === 'FR'\n  ? 'Réponds entièrement en français.'\n  : 'Respond entirely in English.';\n\nconst prompt = `${langPrompt}\\n\\nYou are a senior engineering manager. Write a concise but engaging weekly development summary for the repository \\\"${dateCalc.owner}/${dateCalc.repo}\\\" covering the period from ${dateCalc.dateFrom} to ${dateCalc.dateTo}.\\n\\nWrite in a professional but approachable tone. Use this data:\\n\\n## Merged Pull Requests (${prs.length})\\n${prList}\\n\\n## Closed Issues (${issues.length})\\n${issueList}\\n\\nWrite a 3-4 paragraph narrative summary. Highlight key themes, achievements, and any notable contributors. End with a one-line motivational message for the team.`;\n\nreturn [{ json: {\n  prompt,\n  owner: dateCalc.owner,\n  repo: dateCalc.repo,\n  discordWebhook: dateCalc.discordWebhook,\n  dateFrom: dateCalc.dateFrom,\n  dateTo: dateCalc.dateTo\n} }];"
+      }
     },
     {
       "parameters": {
@@ -147,7 +153,10 @@
       "name": "📦 Format Discord Message",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1560, 300]
+      "position": [1560, 300],
+      "parameters": {
+        "jsCode": "const claudeResponse = $('🤖 Claude Summarise').first().json;\nconst meta = $('📝 Build Claude Prompt').first().json;\n\nconst summary = claudeResponse.content[0].text;\n\nconst discordPayload = {\n  username: 'DevSummary Bot',\n  avatar_url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png',\n  embeds: [\n    {\n      title: `📊 Weekly Dev Summary: ${meta.owner}/${meta.repo}`,\n      description: summary,\n      color: 5793266,\n      footer: {\n        text: `Period: ${meta.dateFrom} → ${meta.dateTo} · Powered by Claude + n8n`\n      }\n    }\n  ]\n};\n\nreturn [{ json: {\n  payload: JSON.stringify(discordPayload),\n  webhook: meta.discordWebhook\n} }];"
+      }
     },
     {
       "parameters": {

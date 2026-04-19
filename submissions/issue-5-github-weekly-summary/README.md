@@ -41,7 +41,7 @@ Toggle the workflow to **Active** in the top-right corner. It will fire automati
 ---
 
 ## 🔧 Manual Test
-To test immediately without waiting for Friday, click the **Cron Trigger** node and hit **"Test step"** — this will run the entire pipeline on demand.
+To test immediately without waiting for Friday, click the **Schedule Trigger** node (named **"Every Friday 5PM"**) and hit **"Test step"** — this will run the entire pipeline on demand.
 
 ---
 
